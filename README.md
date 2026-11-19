@@ -32,8 +32,13 @@ identical, the trophy page has not refreshed for hours — the next
 refresh is overdue, and it will be almost pure dilution: a wave of new
 players who have earned next to nothing yet. For that case the program
 forecasts the rate down by a dilution factor instead of holding it
-flat. The platinum trophy is the exception in the other direction:
-the trophy every tracked player already holds stays at the top.
+flat. How much each trophy keeps depends on how easy it is: the
+newcomer factor grows with the square of the rate, so the rarest
+trophies are diluted nearly to the bare player-count ratio (the
+documented first refresh took tracked players from 638 to 3,868),
+while the easiest ones keep a visible share. The platinum trophy is
+the exception in the other direction: the trophy every tracked player
+already holds stays at the top.
 
 ## Running it
 
@@ -51,6 +56,6 @@ case gives byte-identical output.
 On the practice cases the history is flat: 638 players tracked, every
 rate unchanged since launch night. The program reads that as a stale
 page and forecasts the first refresh down — the platinum trophy, for
-example, from 0.63% to a median near 0.17%, with the 100% trophy
+example, from 0.63% to a median near 0.12%, with the 100% trophy
 unchanged. That is the whole point of the dilution branch: a flat
 history is not a stable rate, it is a page waiting to refresh.

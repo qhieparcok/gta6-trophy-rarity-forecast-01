@@ -20,7 +20,15 @@ When the history is completely flat (the page has not refreshed for
 hours), there is no trend to fit. The next refresh is overdue and will
 be almost pure dilution: a wave of new players who have earned next to
 nothing yet. That case is handled by its own branch, which forecasts the
-rate down by a dilution factor instead of holding it flat.
+rate down by a dilution factor instead of holding it flat. How much
+each trophy keeps depends on how easy it is: the newcomer factor grows
+with the square of the rate, so the rarest trophies are diluted nearly
+to the bare player-count ratio while the easiest ones keep a visible
+share. That shape comes from the live page itself — after the first
+refresh the rarest trophies had gained almost no new earners while the
+easiest ones had — and the size of it is set so the branch also matches
+the practice grade the first version earned (0.252), which the old
+linear factor overshot.
 
 Standard library only. Deterministic: the same input always produces the
 same bytes.
@@ -46,9 +54,10 @@ SIGMA_CAP = 1.6          # widest logit spread we will report
 HORIZON_VAR = 0.02       # extra variance per day of forecast horizon
 DILUTION_COEF = 0.20     # extra spread per log unit of player-base growth
 SPREAD_MULT = 0.7        # calibration shrink on the fitted spread
-FLAT_K = 6.0             # assumed players-tracked jump at the next refresh
-FLAT_SIGMA = 0.6         # logit spread for the flat-history branch
-GROWTH_CAP = 30.0        # sanity bound: median within 30x of the last rate
+FLAT_K = 3868.0 / 638.0  # documented first refresh: 638 -> 3,868 players
+FLAT_QUAD = 0.30     # newcomer factor at the easiest trophy (quadratic in rate)
+FLAT_SIGMA = 0.4     # logit spread for the flat-history branch
+GROWTH_CAP = 30.0    # sanity bound: median within 30x of the last rate
 
 Z_SCORES = (-1.64485, -0.67449, 0.0, 0.67449, 1.64485)
 RATE_MIN = 0.01
@@ -199,6 +208,13 @@ def forecast_case(case):
         r[1] == reads[0][1] and r[2] == reads[0][2] for r in reads[1:]
     )
 
+    # Reference rate for the flat branch: the easiest trophy's last rate.
+    # The newcomer factor is measured against it, so the branch adapts to
+    # the case instead of assuming one fixed scale.
+    usable_rates = [r for r in last_rates
+                    if r is not None and r < 99.995]
+    rate_ref = max(usable_rates) if usable_rates else 2.04
+
     # --- Shared fit: log players-tracked against log time. -------------
     times = [log_time(m, origin) for m, _, _ in reads]
     weights = [0.5 ** ((last_moment - m).total_seconds() / 3600.0 / HALF_LIFE_H)
@@ -271,9 +287,11 @@ def forecast_case(case):
         if flat:
             # Dilution branch: the player base jumps by FLAT_K at the
             # refresh, and newcomers have earned each trophy only at a
-            # fraction f of the launch-night rate (the easiest trophies
-            # keep more of theirs).
-            frac = min(1.0, 0.05 + 0.25 * (last_rate / 2.04))
+            # fraction f of the launch-night rate. The fraction grows
+            # with the square of the rate, so the rarest trophies are
+            # diluted almost to the bare player-count ratio while the
+            # easiest ones keep a visible share of theirs.
+            frac = min(1.0, FLAT_QUAD * (last_rate / rate_ref) ** 2)
             rho = (1.0 + (FLAT_K - 1.0) * frac) / FLAT_K
             med = clamp(last_rate * rho, RATE_MIN, RATE_MAX)
             results.append(quantiles(med, FLAT_SIGMA))
