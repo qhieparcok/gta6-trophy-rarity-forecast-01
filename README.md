@@ -19,11 +19,11 @@ for different reasons, so the program fits them separately. New players
 arrive all the time and dilute every rate, while the players already
 tracked keep earning trophies. `main.py` fits log earners and log
 players-tracked against log time since release, then divides the two
-forecasts to get the rate. The fits use a six-hour recency half-life,
+forecasts to get the rate. The fits use a three-hour recency half-life,
 because launch-week behaviour changes fast; each trophy's slope is
 pulled toward the typical slope of trophies at a similar rate; and the
-extrapolation is damped hard, because a slope that held for a few
-hours should not be trusted a week out. Quantiles are drawn on the
+extrapolation is damped, because a slope that held for a few hours
+should not be trusted a week out. Quantiles are drawn on the
 logit scale, with a spread that grows with the fit's uncertainty, the
 horizon, and how much the player base is expected to grow.
 

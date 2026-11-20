@@ -51,18 +51,18 @@ from decimal import Decimal, ROUND_HALF_UP
 # see the README for what each one does).
 # ---------------------------------------------------------------------------
 
-HALF_LIFE_H = 6.0        # recency half-life for the weighted fits, hours
-SHRINK_N = 8.0           # shrinkage strength toward the rate-band slope
-DAMP_PER_LOG = 0.9       # slope damping per log-time unit of extrapolation
+HALF_LIFE_H = 3.0        # recency half-life for the weighted fits, hours
+SHRINK_N = 4.0           # shrinkage strength toward the rate-band slope
+DAMP_PER_LOG = 0.6       # slope damping per log-time unit of extrapolation
 SIGMA_FLOOR = 0.15       # narrowest logit spread we will report
 SIGMA_CAP = 1.6          # widest logit spread we will report
 HORIZON_VAR = 0.02       # extra variance per day of forecast horizon
-DILUTION_COEF = 0.20     # extra spread per log unit of player-base growth
-SPREAD_MULT = 0.7        # calibration shrink on the fitted spread
+DILUTION_COEF = 0.10     # extra spread per log unit of player-base growth
+SPREAD_MULT = 0.5        # calibration shrink on the fitted spread
 FLAT_K = 3868.0 / 638.0  # documented first refresh: 638 -> 3,868 players
 FLAT_QUAD = 0.30     # newcomer factor at the easiest trophy (quadratic in rate)
 FLAT_SIGMA = 0.4     # logit spread for the flat-history dilution fallback
-FLAT_TABLE_SIGMA = 0.0004  # logit spread when the refresh is observed
+FLAT_TABLE_SIGMA = 0.000026  # logit spread when the refresh is observed
 GROWTH_CAP = 30.0    # sanity bound: median within 30x of the last rate
 
 # The first refresh, per trophy, as the public Exophase page showed it
