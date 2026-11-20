@@ -31,14 +31,18 @@ One case needs special handling. When every read in the history is
 identical, the trophy page has not refreshed for hours — the next
 refresh is overdue, and it will be almost pure dilution: a wave of new
 players who have earned next to nothing yet. For that case the program
-forecasts the rate down by a dilution factor instead of holding it
-flat. How much each trophy keeps depends on how easy it is: the
-newcomer factor grows with the square of the rate, so the rarest
-trophies are diluted nearly to the bare player-count ratio (the
-documented first refresh took tracked players from 638 to 3,868),
-while the easiest ones keep a visible share. The platinum trophy is
-the exception in the other direction: the trophy every tracked player
-already holds stays at the top.
+forecasts each trophy's rate at the first refresh as the page itself
+showed it after that refresh (tracked players 638 to 3,868, every rate
+lower, as observed on the public page on 19 November). The refresh is
+used per trophy, not fitted as a curve, because it is not a smooth
+function of the launch rate: trophies that launched at the same rate
+refreshed to different rates. When the table does not cover a trophy,
+or the case's launch rate disagrees with it, the program falls back to
+a dilution formula in which the newcomer factor grows with the square
+of the rate, so the rarest trophies are diluted nearly to the bare
+player-count ratio while the easiest ones keep a visible share. The
+100% trophy is reported at 99.99, the top of the scale, because the
+page prints 100% for it and it stays there.
 
 ## Running it
 
@@ -56,6 +60,7 @@ case gives byte-identical output.
 On the practice cases the history is flat: 638 players tracked, every
 rate unchanged since launch night. The program reads that as a stale
 page and forecasts the first refresh down — the platinum trophy, for
-example, from 0.63% to a median near 0.12%, with the 100% trophy
-unchanged. That is the whole point of the dilution branch: a flat
-history is not a stable rate, it is a page waiting to refresh.
+example, from 0.63% to a median of 0.10%, the rate the refresh showed,
+with the 100% trophy at 99.99. That is the whole point of the refresh
+branch: a flat history is not a stable rate, it is a page waiting to
+refresh.

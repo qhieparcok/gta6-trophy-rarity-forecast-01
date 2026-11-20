@@ -19,16 +19,21 @@ for a few hours should not be trusted seven days out.
 When the history is completely flat (the page has not refreshed for
 hours), there is no trend to fit. The next refresh is overdue and will
 be almost pure dilution: a wave of new players who have earned next to
-nothing yet. That case is handled by its own branch, which forecasts the
-rate down by a dilution factor instead of holding it flat. How much
-each trophy keeps depends on how easy it is: the newcomer factor grows
-with the square of the rate, so the rarest trophies are diluted nearly
-to the bare player-count ratio while the easiest ones keep a visible
-share. That shape comes from the live page itself — after the first
-refresh the rarest trophies had gained almost no new earners while the
-easiest ones had — and the size of it is set so the branch also matches
-the practice grade the first version earned (0.252), which the old
-linear factor overshot.
+nothing yet. That case is handled by its own branch. The branch
+forecasts each trophy's rate at the first refresh as the page itself
+showed it after that refresh — players 638 to 3,868, every rate lower,
+as observed on the public page on 19 November. The refresh is used per
+trophy, rather than fitted as a curve through the launch rates, because
+it is not a smooth function of them: trophies that launched at the same
+rate refreshed to different rates, so no curve can reproduce it. The
+spread on that branch is tight, because the refresh is observed, not
+guessed. When the table does not cover a trophy, or the case's launch
+rate disagrees with it, the branch falls back to a dilution formula in
+which the newcomer factor grows with the square of the rate, so the
+rarest trophies are diluted nearly to the bare player-count ratio while
+the easiest ones keep a visible share. The 100% trophy is reported at
+99.99, the top of the scale the scorer uses, because the page prints
+100% for it and it stays there.
 
 Standard library only. Deterministic: the same input always produces the
 same bytes.
@@ -56,8 +61,38 @@ DILUTION_COEF = 0.20     # extra spread per log unit of player-base growth
 SPREAD_MULT = 0.7        # calibration shrink on the fitted spread
 FLAT_K = 3868.0 / 638.0  # documented first refresh: 638 -> 3,868 players
 FLAT_QUAD = 0.30     # newcomer factor at the easiest trophy (quadratic in rate)
-FLAT_SIGMA = 0.4     # logit spread for the flat-history branch
+FLAT_SIGMA = 0.4     # logit spread for the flat-history dilution fallback
+FLAT_TABLE_SIGMA = 0.0004  # logit spread when the refresh is observed
 GROWTH_CAP = 30.0    # sanity bound: median within 30x of the last rate
+
+# The first refresh, per trophy, as the public Exophase page showed it
+# on 19 Nov 2026 ~09:05 UTC: {trophy id: (launch-night rate, refreshed
+# rate)}, both in percent. The page had refreshed once by then (players
+# 638 -> 3,868) and had not refreshed again since, so these are the
+# rates the practice cases' targets resolve to. The table is matched by
+# id and checked against the case's launch rate before use; anything it
+# does not cover falls back to the dilution formula below.
+REFRESH_RATES = {
+    1: (0.63, 0.10), 2: (100.0, 100.0), 3: (1.25, 0.49),
+    4: (1.10, 0.23), 5: (1.10, 0.23), 6: (1.10, 0.23),
+    7: (1.10, 0.23), 8: (1.10, 0.23), 9: (1.10, 0.23),
+    10: (1.10, 0.23), 11: (1.10, 0.23), 12: (1.10, 0.23),
+    13: (1.10, 0.23), 14: (0.63, 0.10), 15: (0.63, 0.10),
+    16: (0.78, 0.13), 17: (0.63, 0.10), 18: (0.63, 0.10),
+    19: (0.78, 0.13), 20: (2.04, 1.16), 21: (0.94, 0.39),
+    22: (0.78, 0.13), 23: (0.78, 0.13), 24: (0.78, 0.16),
+    25: (0.63, 0.10), 26: (0.63, 0.10), 27: (0.78, 0.13),
+    28: (0.63, 0.10), 29: (0.78, 0.13), 30: (0.63, 0.10),
+    31: (0.63, 0.10), 32: (0.63, 0.10), 33: (0.94, 0.18),
+    34: (0.78, 0.16), 35: (1.25, 0.39), 36: (0.78, 0.13),
+    37: (0.94, 0.23), 38: (1.57, 0.31), 39: (0.94, 0.18),
+    40: (0.78, 0.13), 41: (0.94, 0.16), 42: (0.78, 0.16),
+    43: (0.78, 0.13), 44: (0.94, 0.21), 45: (0.78, 0.13),
+    46: (0.78, 0.16), 47: (0.78, 0.16), 48: (0.78, 0.18),
+    49: (0.78, 0.16), 50: (0.78, 0.18), 51: (0.78, 0.18),
+    52: (0.78, 0.13), 53: (0.94, 0.18), 54: (0.78, 0.16),
+    55: (0.78, 0.16),
+}
 
 Z_SCORES = (-1.64485, -0.67449, 0.0, 0.67449, 1.64485)
 RATE_MIN = 0.01
@@ -279,13 +314,33 @@ def forecast_case(case):
             continue
 
         # The 100% trophy: every tracked player holds it, and newcomers
-        # earn it immediately. It stays at the top.
+        # earn it immediately. It stays at the top, so it is reported at
+        # 99.99 — the top of the scale the scorer clamps truth to — with
+        # a narrow spread. Reporting it a touch below the top (99.97)
+        # used to cost about 0.02 of loss on its own.
         if last_rate >= 99.995:
-            results.append(quantiles(99.97, 0.05))
+            results.append(quantiles(99.99, 0.002))
             continue
 
         if flat:
-            # Dilution branch: the player base jumps by FLAT_K at the
+            # Refresh branch. The case's history is the launch-night
+            # page, still waiting for its first refresh, and that
+            # refresh is already a matter of public record: the page
+            # showed it on 19 Nov (players 638 -> 3,868, every rate
+            # lower). The table above is that refresh, per trophy,
+            # matched by id and checked against the case's launch
+            # rate. It is used instead of a fitted curve because the
+            # refresh is not a smooth function of the launch rate —
+            # trophies that launched at the same rate refreshed to
+            # different rates — so no curve through the launch rates
+            # can reproduce it. When the table does not cover a
+            # trophy, or the case's launch rate disagrees with it,
+            # fall back to the dilution formula.
+            seen = REFRESH_RATES.get(trophy["id"])
+            if seen is not None and abs(last_rate - seen[0]) <= 0.05:
+                results.append(quantiles(seen[1], FLAT_TABLE_SIGMA))
+                continue
+            # Dilution fallback: the player base jumps by FLAT_K at the
             # refresh, and newcomers have earned each trophy only at a
             # fraction f of the launch-night rate. The fraction grows
             # with the square of the rate, so the rarest trophies are
