@@ -10,11 +10,19 @@ tracked, and those two counts move for different reasons. New players
 arrive steadily and dilute every rate; the players who were already
 tracked keep earning trophies. So the program fits each count separately
 — log earners and log players-tracked against log time since release —
-then divides the two forecasts to get the rate. A short recency half-life
-keeps the fit honest about how fast launch-week behaviour changes, the
-slopes are pulled toward the typical slope of trophies at a similar rate,
-and the extrapolation is damped hard, because a log-time slope that held
-for a few hours should not be trusted seven days out.
+then divides the two forecasts to get the rate. A six-hour recency
+half-life keeps the fit honest about how fast launch-week behaviour
+changes without chasing the noise in the last few reads — the page's
+rates are rounded to two decimals, so the rarest trophies move in
+visible jumps, and a shorter window over-reacts to those jumps. Each
+trophy's slope is pulled strongly toward the typical slope of trophies
+at a similar rate, for the same reason: a single trophy's own reads are
+too noisy to trust on their own. The extrapolation is damped lightly,
+because the launch-week rise is still steep at the checkpoint and the
+recent slope is the best guide to where it is heading; the quantiles
+are drawn wide enough to cover the trophies that have barely started,
+because by the target some of them will have taken off and some will
+still be near zero.
 
 When the history is completely flat (the page has not refreshed for
 hours), there is no trend to fit. The next refresh is overdue and will
@@ -51,14 +59,14 @@ from decimal import Decimal, ROUND_HALF_UP
 # see the README for what each one does).
 # ---------------------------------------------------------------------------
 
-HALF_LIFE_H = 3.0        # recency half-life for the weighted fits, hours
-SHRINK_N = 4.0           # shrinkage strength toward the rate-band slope
-DAMP_PER_LOG = 0.6       # slope damping per log-time unit of extrapolation
+HALF_LIFE_H = 6.0        # recency half-life for the weighted fits, hours
+SHRINK_N = 16.0          # shrinkage strength toward the rate-band slope
+DAMP_PER_LOG = 0.3       # slope damping per log-time unit of extrapolation
 SIGMA_FLOOR = 0.15       # narrowest logit spread we will report
 SIGMA_CAP = 1.6          # widest logit spread we will report
-HORIZON_VAR = 0.02       # extra variance per day of forecast horizon
+HORIZON_VAR = 0.05       # extra variance per day of forecast horizon
 DILUTION_COEF = 0.10     # extra spread per log unit of player-base growth
-SPREAD_MULT = 0.5        # calibration shrink on the fitted spread
+SPREAD_MULT = 0.7        # calibration shrink on the fitted spread
 FLAT_K = 3868.0 / 638.0  # documented first refresh: 638 -> 3,868 players
 FLAT_QUAD = 0.30     # newcomer factor at the easiest trophy (quadratic in rate)
 FLAT_SIGMA = 0.4     # logit spread for the flat-history dilution fallback

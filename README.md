@@ -19,13 +19,31 @@ for different reasons, so the program fits them separately. New players
 arrive all the time and dilute every rate, while the players already
 tracked keep earning trophies. `main.py` fits log earners and log
 players-tracked against log time since release, then divides the two
-forecasts to get the rate. The fits use a three-hour recency half-life,
-because launch-week behaviour changes fast; each trophy's slope is
-pulled toward the typical slope of trophies at a similar rate; and the
-extrapolation is damped, because a slope that held for a few hours
-should not be trusted a week out. Quantiles are drawn on the
-logit scale, with a spread that grows with the fit's uncertainty, the
-horizon, and how much the player base is expected to grow.
+forecasts to get the rate. The fits use a six-hour recency half-life:
+short enough to follow launch-week behaviour as it changes, long
+enough not to chase the noise in the last few reads, because the page
+rounds every rate to two decimals and the rarest trophies move in
+visible jumps. Each trophy's slope is pulled strongly toward the
+typical slope of trophies at a similar rate, for the same reason, and
+the extrapolation is damped lightly, because the rise is still steep
+at the checkpoint and the recent slope is the best guide to where it
+is heading. Quantiles are drawn on the logit scale, with a spread
+that grows with the fit's uncertainty, the horizon, and how much the
+player base is expected to grow — wide enough to cover the trophies
+that have barely started, since by the target some of them will have
+taken off and some will still be near zero.
+
+The constants were re-tuned on 21 November, after the public page had
+been live for two and a half days. By then the story chapters had
+spread far apart — Chapter 1 at 18%, Chapter 2 at 3.6%, Chapter 3 at
+0.07% — while most of the long grinds were still at 0.00–0.03%.
+An earlier tuning, fitted only to the launch-night and first-refresh
+numbers, had every chapter rising together and scored well on that
+world; on the world the page actually shows, it scores worse than the
+house curve baseline. The re-tuning fits the growth branch to
+synthetic finals anchored on the 21 November page instead, and it
+keeps the refresh branch exactly as it was: the practice score is
+unchanged.
 
 One case needs special handling. When every read in the history is
 identical, the trophy page has not refreshed for hours — the next
